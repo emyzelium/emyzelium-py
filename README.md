@@ -1,4 +1,4 @@
-# Emyzelium (Python)
+# ![logo disk](https://github.com/emyzelium/visuals/blob/main/logo_disk_32.png) Emyzelium (Python)
 
 ## Synopsis
 
