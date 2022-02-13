@@ -3,7 +3,7 @@
 """
 Emyzelium (Python)
 
-Emyzelium is another gigathin wrapper around ZeroMQ's Publish-Subscribe and
+This is another gigathin wrapper around ZeroMQ's Publish-Subscribe and
 Pipeline messaging patterns with mandatory Curve security and optional ZAP
 authentication filter over TCP/IP for distributed artificial elife,
 decision making etc. systems where each peer, identified by its public key,

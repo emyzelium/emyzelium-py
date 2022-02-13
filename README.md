@@ -2,7 +2,7 @@
 
 ## Synopsis
 
-Emyzelium is another gigathin wrapper around [ZeroMQ](https://zeromq.org/)'s [Publish-Subscribe](https://zeromq.org/socket-api/#publish-subscribe-pattern) and [Pipeline](https://zeromq.org/socket-api/#pipeline-pattern) messaging patterns with mandatory [Curve](https://rfc.zeromq.org/spec/26/) security and optional [ZAP](https://rfc.zeromq.org/spec/27/) authentication filter over TCP/IP for distributed artificial elife, decision making etc. systems where each peer, identified by its public key, provides and updates vectors of vectors of bytes under unique topics that other peers can subscribe to and receive; peers obtain each other's IP addresses:ports by sending beacons and subscribing to nameservers whose addresses:ports are known.
+This is another gigathin wrapper around [ZeroMQ](https://zeromq.org/)'s [Publish-Subscribe](https://zeromq.org/socket-api/#publish-subscribe-pattern) and [Pipeline](https://zeromq.org/socket-api/#pipeline-pattern) messaging patterns with mandatory [Curve](https://rfc.zeromq.org/spec/26/) security and optional [ZAP](https://rfc.zeromq.org/spec/27/) authentication filter over TCP/IP for distributed artificial elife, decision making etc. systems where each peer, identified by its public key, provides and updates vectors of vectors of bytes under unique topics that other peers can subscribe to and receive; peers obtain each other's IP addresses:ports by sending beacons and subscribing to nameservers whose addresses:ports are known.
 
 Requires [Python 3.6+](https://www.python.org/) and, of course, [PyZMQ](https://github.com/zeromq/pyzmq) (usually from [here](https://pypi.org/project/pyzmq/)). Nameserver *with* TUI and demo require [curses](https://docs.python.org/3/library/curses.html), which is included into standard Python distribution, but on Windows you should install [windows-curses](https://pypi.org/project/windows-curses/) before using it.
 
@@ -11,6 +11,8 @@ Versions in other languages: [C++](https://github.com/emyzelium/emyzelium-cpp).
 ## Warning
 
 There are tasks and scales where this model may succeed, seemingly (starting with pet-project-grade ones), and then there are tasks and scales where it will fail, miserably (ending with industry-, and especially critical-infrastructure-grade ones), up to the international day of mourning for its victims. Proceed with caution.
+
+See also [mycoses](https://en.wikipedia.org/wiki/Fungal_infection).
 
 ## Demo
 
