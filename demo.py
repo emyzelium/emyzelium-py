@@ -5,11 +5,12 @@ Emyzelium (Python)
 
 is another wrapper around ZeroMQ's Publish-Subscribe messaging pattern
 with mandatory Curve security and optional ZAP authentication filter,
-over Tor, through Tor SOCKS5 proxy,
+over Tor, through Tor SOCKS proxy,
 for distributed artificial elife, decision making etc. systems where
-each peer, identified by its onion address, port, and public key,
-provides and updates vectors of vectors of bytes
-under unique topics that other peers can subscribe to and receive.
+each peer, identified by its public key, onion address, and port,
+publishes and updates vectors of vectors of bytes of data
+under unique topics that other peers subscribe to
+and receive the respective data.
  
 https://github.com/emyzelium/emyzelium-py
 
@@ -62,6 +63,13 @@ MARY_ONION = "PLACEHOLDER PLACEHOLDER PLACEHOLDER PLACEHOLDER PLACEHOL" # from s
 MARY_PORT = 60849
 
 
+def time_musec(): # microseconds since Unix epoch
+	if sys.version_info >= (3, 7):
+		return time.time_ns() // 1000
+	else:
+		return round(time.time() * 1e6)
+
+
 def init_term_graphics(scr):
 	scr.nodelay(True)
 	curses.curs_set(0)
@@ -90,6 +98,12 @@ def print_rect(scr, x, y, w, h):
 		scr.addstr(y + h - 1, x + j, "─")
 
 
+class Other:
+	def __init__(self, name, publickey):
+		self.name = name
+		self.publickey = publickey
+
+
 class Realm_CA:
 	def __init__(self, name, secretkey, whitelist_publickeys, pubport, width, height, birth, survival, autoemit_interval=4.0, framerate=30):
 		if (height & 1) != 0:
@@ -115,10 +129,10 @@ class Realm_CA:
 
 
 	def add_other(self, name, publickey, onion, port):
-		ehypha, ew = self.efunguz.add_ehypha(publickey, onion, port)
-		selfdesc, ew = ehypha.add_etale("")
-		zone, ew = ehypha.add_etale("zone")
-		self.others.append([name + "'s", selfdesc, zone])
+		ehypha, _ = self.efunguz.add_ehypha(publickey, onion, port)
+		ehypha.add_etale("")
+		ehypha.add_etale("zone")
+		self.others.append(Other(name, publickey))
 
 
 	def flip(self, y=None, x=None):
@@ -246,11 +260,13 @@ class Realm_CA:
 		render = True
 		autoemit = True
 
-		t_last_emit = 0
-		t_last_render = 0
+		t_start = time_musec()
+
+		t_last_emit = -65536.0
+		t_last_render = -65536.0
 
 		while not quit:
-			t = time.time()
+			t = 1e-6 * (time_musec() - t_start)
 
 			if t - t_last_render > 1.0 / self.framerate:
 				scr.erase()
@@ -259,11 +275,12 @@ class Realm_CA:
 					self.render(scr, paused)
 				else:
 					scr.addstr(0, 0, "Render OFF")
-				scr.addstr((h >> 1) + 2, 0, f"This realm: \"{self.name}\" (birth {self.birth}, survival {self.survival}), SLE {t - t_last_emit:.1f}, autoemit ({self.autoemit_interval:.1f}) "+ ("ON" if autoemit else "OFF"))
+				scr.addstr((h >> 1) + 2, 0, f"This realm: \"{self.name}'s\" (birth {self.birth}, survival {self.survival}), SLE {t - t_last_emit:.1f}, autoemit ({self.autoemit_interval:.1f}) "+ ("ON" if autoemit else "OFF"))
 				scr.addstr((h >> 1) + 3, 0, f"Other realms: ")
 				for i_other in range(len(self.others)):
-					that_name, _, that_etale_zone = self.others[i_other]
-					scr.addstr((", " if (i_other > 0) else "") + f"[{i_other + 1}] \"{that_name}\" (SLU {t - that_etale_zone.t_in * 1e-6:.1f})")
+					that = self.others[i_other]
+					that_t_in = self.efunguz.get_ehypha(that.publickey)[0].get_etale("zone")[0].t_in
+					scr.addstr((", " if (i_other > 0) else "") + f"[{i_other + 1}] \"{that.name}'s\" (SLU {t - 1e-6 * (that_t_in - t_start):.1f})")
 				scr.addstr(curses.LINES - 3, 0, "[Q] quit, [C] clear, [R] reset, [V] render on/off, [P] pause/resume")
 				scr.addstr(curses.LINES - 2, 0, "[A] autoemit on/off, [E] emit, [1-9] import")
 				scr.addstr(curses.LINES - 1, 0, "If paused: [T] turn, [→ ↑ ← ↓] move cursor, [ ] flip cell")
@@ -301,8 +318,9 @@ class Realm_CA:
 			elif (ch >= ord('1')) and (ch <= ord('9')):
 				i_other = ch - ord('1')
 				if i_other < len(self.others):
-					that_etale_zone = self.others[i_other][2]
-					self.put_etale_to_zone(that_etale_zone.parts)
+					that = self.others[i_other]
+					that_zone = self.efunguz.get_ehypha(that.publickey)[0].get_etale("zone")[0]
+					self.put_etale_to_zone(that_zone.parts)
 
 			if paused:
 				if ch in [ord('t'), ord('T')]:
@@ -321,7 +339,6 @@ class Realm_CA:
 
 def app_realm(scr, name):
 	name = name.capitalize()
-	thisname = name	+ "'s"
 	if name == "Alien":
 		secretkey = ALIEN_SECRETKEY
 		pubport = ALIEN_PORT
@@ -370,7 +387,10 @@ def app_realm(scr, name):
 	width = curses.COLS - 2
 	height = (curses.LINES - 8) << 1 # even
 
-	realm = Realm_CA(thisname, secretkey, set(), pubport, width, height, birth, survival)
+	realm = Realm_CA(name, secretkey, set(), pubport, width, height, birth, survival)
+
+	# Uncomment to restrict: Alien gets data from John and Mary; John gets data from Alien but not from Mary; Mary gets data from neither Alien, nor John
+	# realm.efunguz.add_whitelist_publickeys({that1_publickey})
 
 	realm.add_other(that1_name, that1_publickey, that1_onion, that1_port)
 	realm.add_other(that2_name, that2_publickey, that2_onion, that2_port)

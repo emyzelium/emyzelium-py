@@ -3,11 +3,12 @@ Emyzelium (Python)
 
 is another wrapper around ZeroMQ's Publish-Subscribe messaging pattern
 with mandatory Curve security and optional ZAP authentication filter,
-over Tor, through Tor SOCKS5 proxy,
+over Tor, through Tor SOCKS proxy,
 for distributed artificial elife, decision making etc. systems where
-each peer, identified by its onion address, port, and public key,
-provides and updates vectors of vectors of bytes
-under unique topics that other peers can subscribe to and receive.
+each peer, identified by its public key, onion address, and port,
+publishes and updates vectors of vectors of bytes of data
+under unique topics that other peers subscribe to
+and receive the respective data.
  
 https://github.com/emyzelium/emyzelium-py
 
@@ -41,6 +42,7 @@ except ImportError:
 
 from zmq.utils import z85
 
+import secrets
 import sys
 import time
 
@@ -50,8 +52,8 @@ if (sys.version_info[0] < 3) or ((sys.version_info[0] == 3) and (sys.version_inf
 	exit(1)
 
 
-VERSION = "0.9.0"
-DATE = "2023.10.08"
+VERSION = "0.9.2"
+DATE = "2023.10.11"
 
 EW_OK = 0
 EW_ALREADY_PRESENT = 1
@@ -62,10 +64,12 @@ EW_ABSENT = 5
 
 KEY_Z85_LEN = 40
 
-ROUTING_ID_PUBSUB = b"pubsub"
+CURVE_MECHANISM_ID = b"CURVE" # See https://rfc.zeromq.org/spec/27/
+ZAP_DOMAIN_ID = b"emyz"
+
+ZAP_SESSION_ID_LEN = 32
 
 DEF_IPV6_STATUS = 1
-
 DEF_LINGER = 0
 
 DEF_PUBSUB_PORT = 0xEDAF # 60847
@@ -119,6 +123,13 @@ class Ehypha:
 			return etale, EW_OK
 		else:
 			return self.etales[title], EW_ALREADY_PRESENT
+
+
+	def get_etale(self, title):
+		if title in self.etales.keys():
+			return self.etales[title], EW_OK
+		else:
+			return None, EW_ABSENT
 
 
 	def del_etale(self, title):
@@ -210,15 +221,20 @@ class Efunguz:
 
 		self.ehyphae = dict()
 
+		# At first, REP socket for ZAP auth...
 		self.zapsock = self.context.socket(zmq.REP)
 		self.zapsock.set(zmq.LINGER, DEF_LINGER)
 		self.zapsock.bind("inproc://zeromq.zap.01")
 
+		self.zap_session_id = secrets.token_bytes(ZAP_SESSION_ID_LEN) # must be cryptographically random... is it?
+
+		# ..and only then, PUB socket
 		self.pubsock = self.context.socket(zmq.PUB)
 		self.pubsock.set(zmq.LINGER, DEF_LINGER)
 		self.pubsock.curve_server = True
 		self.pubsock.curve_secretkey = self.secretkey.encode("ascii")
-		self.pubsock.set(zmq.ROUTING_ID, ROUTING_ID_PUBSUB)
+		self.pubsock.set(zmq.ZAP_DOMAIN, ZAP_DOMAIN_ID) # to enable auth, must be non-empty due to ZMQ RFC 27
+		self.pubsock.set(zmq.ROUTING_ID, self.zap_session_id) # to make sure only this pubsock can pass auth through zapsock; see update()
 		self.pubsock.bind(f"tcp://*:{self.pubsub_port}")
 
 
@@ -255,6 +271,14 @@ class Efunguz:
 			return self.ehyphae[serverkey], EW_ALREADY_PRESENT
 
 
+	def get_ehypha(self, publickey):
+		cp_publickey = cut_pad_key_str(publickey)
+		if cp_publickey in self.ehyphae.keys():
+			return self.ehyphae[cp_publickey], EW_OK
+		else:
+			return None, EW_ABSENT
+
+
 	def del_ehypha(self, that_publickey):
 		serverkey = cut_pad_key_str(that_publickey)
 		if serverkey in self.ehyphae.keys():
@@ -278,7 +302,7 @@ class Efunguz:
 			key_b = z85.encode(key)
 			key_s = key_b.decode("ascii")
 			reply = [version, sequence]
-			if (identity == ROUTING_ID_PUBSUB) and ((len(self.whitelist_publickeys) == 0) or (key_s in self.whitelist_publickeys)):
+			if (identity == self.zap_session_id) and (mechanism == CURVE_MECHANISM_ID) and ((len(self.whitelist_publickeys) == 0) or (key_s in self.whitelist_publickeys)):
 				reply += [b"200", b"OK", key_b, b""] # Auth passed
 			else:
 				reply += [b"400", b"FAILED", b"", b""] # Auth failed

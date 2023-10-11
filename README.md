@@ -1,10 +1,14 @@
 # ![logo disk](https://github.com/emyzelium/visuals/blob/main/logo_disk_32.png) Emyzelium (Python)
 
-is another wrapper around [ZeroMQ](https://zeromq.org/)'s [Publish-Subscribe](https://zeromq.org/socket-api/#publish-subscribe-pattern) messaging pattern with mandatory [Curve](https://rfc.zeromq.org/spec/26/) security and optional [ZAP](https://rfc.zeromq.org/spec/27/) authentication filter, over [Tor](https://torproject.org), through Tor SOCKS5 proxy, for distributed artificial elife, decision making etc. systems where each peer, identified by its onion address, port, and public key, provides and updates vectors of vectors of bytes under unique topics that other peers can subscribe to and receive.
+is another wrapper around [ZeroMQ](https://zeromq.org/)'s [Publish-Subscribe](https://zeromq.org/socket-api/#publish-subscribe-pattern) messaging pattern with mandatory [Curve](https://rfc.zeromq.org/spec/26/) security and optional [ZAP](https://rfc.zeromq.org/spec/27/) authentication filter, over [Tor](https://torproject.org), through Tor SOCKS proxy, for distributed artificial elife, decision making etc. systems where each peer, identified by its public key, onion address, and port, publishes and updates vectors of vectors of bytes of data under unique topics that other peers subscribe to and receive the respective data.
 
-Requires [Python 3.6+](https://www.python.org/) and, of course, [PyZMQ](https://github.com/zeromq/pyzmq) (usually from [here](https://pypi.org/project/pyzmq/)). Demo requires [curses](https://docs.python.org/3/library/curses.html), which is included into standard Python distribution, but on Windows you should install [windows-curses](https://pypi.org/project/windows-curses/) before using it.
+Requires [Python 3.6+](https://www.python.org/), [PyZMQ](https://github.com/zeromq/pyzmq) (usually from [here](https://pypi.org/project/pyzmq/)), and [Tor](https://community.torproject.org/onion-services/setup/install/). Demo also requires [curses](https://docs.python.org/3/library/curses.html), which is included into standard Python distribution, but on Windows you should install [windows-curses](https://pypi.org/project/windows-curses/) before using it.
 
-Versions in other languages: [C++](https://github.com/emyzelium/emyzelium-cpp).
+Versions in other languages:
+
+* [C++](https://github.com/emyzelium/emyzelium-cpp)
+
+* [Rust](https://github.com/emyzelium/emyzelium-rs)
 
 ## Warning
 
@@ -37,13 +41,13 @@ HiddenServicePort 60849
 
 and in a terminal (note `tor@default` instead of `tor`):
 
-```console
+```shell
 $ sudo systemctl restart tor@default
 ```
 
 then check if there are any problems:
 
-```console
+```shell
 $ systemctl status tor@default
 ```
 
@@ -51,19 +55,19 @@ should show `... active(running) ...`
 
 Wait a little for 3 specified dirs to appear, and, in each of them, the file `hostname`.
 
-Now download Emyzelium files, say, to `~/emz-py/`. Open `demo.py` and, right after imports, change `ALIEN_ONION` value to onion address from `/var/lib/tor/p2p_dummysite1/hostname` *without `.onion` suffix*. Also change `ALIEN_PORT` value to 60847.
+Now download Emyzelium files, say, to `~/emz-py/`. Open `demo.py` and, right after imports, change `ALIEN_ONION` value to onion address from `/var/lib/tor/p2p_dummysite1/hostname` *without `.onion` suffix*. Also change `ALIEN_PORT` value to `60847`.
 
 Make analogous changes to `JOHN_ONION`, `JOHN_PORT` (2) and `MARY_ONION`, `MARY_PORT` (3). Save changes to `demo.py`.
 
 ---
 
-You can also check whether these onion addresses have become known to Tor network; if they have, e.g. `netcat` should work — open 2 terminals and see if it is the case:
+You can also check whether these onion addresses have become known to Tor network; if they have, e.g. `netcat` should work, — open 2 terminals and see if it is the case:
 
-```console
+```shell
 term1$ nc -v -l 60847
 ```
 
-```console
+```shell
 term2$ torsocks nc -v ONION1.onion 60847
 ```
 
@@ -73,15 +77,15 @@ term2$ torsocks nc -v ONION1.onion 60847
 
 Finally, to emyzeliumisation of Life. Open 3 terminals and from `~/emz-py/` run the following in any order:
 
-```console
+```shell
 term1$ python3 demo.py Alien
 ```
 
-```console
+```shell
 term2$ python3 demo.py John
 ```
 
-```console
+```shell
 term3$ python3 demo.py Mary
 ```
 
@@ -101,7 +105,7 @@ Then you should see something like this:
 
 ![Demo animation, Mary](https://github.com/emyzelium/visuals/blob/main/anim_demo_Mary.gif)
 
-As soon as Alien's, John's, and Mary's peers (*efungi*) have connected to each other via Tor, their cellular automatons (*realms*) can exchange cell regions (*etales*) not far from realtime.
+As soon as Alien's, John's, and Mary's peers (*efungi*) have established connections (*ehyphae*) to each other over Tor, their cellular automatons (*realms*) can exchange cell regions (*etales*) not far from realtime.
 
 Before the connections are established, SLUs (Since Last Update) are "large" (no updates yet); afterward they stay in 0–10 sec range. Press "1" or "2" to actually import updated region from other realm.
 
@@ -109,23 +113,23 @@ If you make that import automatic as well as emission, e.g. import from random o
 
 Note that birth/survival rules of Alien's CA, B34/S34, are different from classic B3/S23 of John's and Mary's CAs. In other words, although the "local geometry" of the realms is the same (Moore neigborhood), their "physics" are different.
 
-The names "Alien", "John", "Mary" are not required and are used for convenience. Each peer is identified by its onion, port, and public key.
+The names "Alien", "John", "Mary" are not required and are used for convenience. Each peer is identified by its public key, onion, and port.
 
 You can quit any of these 3 instances at any time and run it again after a while, the connections will be restored. The last "snapshot" of the region published by given peer is kept at each peer that has received it before being replaced by the next snapshot.
 
 And you can mix versions in different languages, as long as no more than single instance of each peer runs at the same time. That is, you can replace
 
-```console
-t1$ python3 demo.py Alien
+```shell
+term1$ python3 demo.py Alien
 ```
 
 by
 
-```console
-t1$ ./demo Alien
+```shell
+term1$ cargo run --release --example demo Alien
 ```
 
-from [Emyzelium in C++](https://github.com/emyzelium/emyzelium-cpp).
+from [Emyzelium in Rust](https://github.com/emyzelium/emyzelium-rs).
 
 ### On multiple PCs connected to Internet
 
@@ -138,19 +142,19 @@ HiddenServiceDir /var/lib/tor/p2p_dummysite/
 HiddenServicePort 60847
 ```
 
-only onion addresses in `hostname` files will be different and, as before, should be specified as `ALIEN_ONION`, `JOHN_ONION`, `MARY_ONION` values in `demo.py`. Also, this time it suffices on each PC to have in `demo.py` only the single corresponding `SECRETKEY`.
+only onion addresses in `hostname` files will be different and, as before, should be specified as `ALIEN_ONION`, `JOHN_ONION`, `MARY_ONION` values in `demo.py`-s; all `_PORT`-s must be `60847`. Also, this time it suffices on each PC to have in `demo.py` only the single corresponding `_SECRETKEY`.
 
 After Emyzelium files with accordingly modified `demo.py` have been put on these PCs, do the following:
 
-```console
+```shell
 pc1$ python3 demo.py Alien
 ```
 
-```console
+```shell
 pc2$ python3 demo.py John
 ```
 
-```console
+```shell
 pc3$ python3 demo.py Mary
 ```
 
@@ -160,7 +164,7 @@ and almost exactly the same as above should be observed.
 
 Emyzelium relies on ZeroMQ's Curve and ZAP encryption and authentication schemes, a variety of [public key cryptography](https://en.wikipedia.org/wiki/Public-key_cryptography) (basic knowledge of which is presumed). Therefore each "subject" within emyzelium needs and is partially defined by a secret key and a corresponding public key. There are 2 encodings of such keys: raw (32 bytes, each from 0–255 range) and printable [Z85](https://rfc.zeromq.org/spec/32/) (40 symbols, each from 85-element subset of ASCII).
 
-Emyzelium's methods expect the keys as `str`s (not `bytes`) in Z85 encoding.
+Emyzelium's methods expect the keys as `str`-s (not `bytes`) in Z85 encoding.
 
 To obtain such pair of keys,
 
@@ -170,8 +174,9 @@ import zmq
 publickey, secretkey = zmq.curve_keypair()
 publickey = publickey.decode("ascii")
 secretkey = secretkey.decode("ascii")
+print(f"Public key: {publickey}")
 # Make sure no one is behind your back...
-print(f"Public key: {publickey}\nSecret key: {secretkey}\n")
+print(f"Secret key: {secretkey}")
 ```
 
 Obviously, *keys are not arbitrary ASCII strings of length 40* that could be "typed by smashing on keyboard". In particular, the public one can be derived from the secret one:
@@ -210,7 +215,7 @@ So, *Efunguz*, *Ehypha*, and *Etale* are just fancy names of well known concepts
 
 ---
 
-**Efunguz**, a.k.a. peer, is the mediator between some "realm", represented by your program, and Tor network, represented by ZeroMQ on top of Tor SOCKS5 proxy, to which it talks. To the former, it simplifies security, (re)connection, and data flow tasks.
+**Efunguz**, a.k.a. peer, is the mediator between some "realm", represented by your program, and Tor network, represented by ZeroMQ on top of Tor SOCKS proxy, to which it talks. To the former, it simplifies security, (re)connection, and data flow tasks.
 
 The simplest way to construct efunguz is
 
@@ -219,17 +224,18 @@ my_secretkey = "gbMF0ZKztI28i6}ax!&Yw/US<CCA9PLs.Osr3APc"
 efunguz = emz.Efunguz(my_secretkey)
 ```
 
-Some additional parameters:
+More customisation:
 
 ```python
 whitelist_publickeys = {"WR)%3-d9dw)%3VQ@O37dVe<09FuNzI{vh}Vfi+]0", "iGxlt)JYh!P9xPCY%BlY4Y]c^<=W)k^$T7GirF[R"}
 pubsub_port = 54321
-efunguz = emz.Efunguz(my_secretkey, whitelist_publickeys, pubsub_port)
+torproxy_port = 9955
+efunguz = emz.Efunguz(my_secretkey, whitelist_publickeys, pubsub_port, torproxy_port)
 ```
 
 Now only the owners of secret keys corresponding to `whitelist_publickeys` will be able to subscribe to and receive etales of this efunguz. And they must connect to port `54321` instead of "default" one.
 
-By default whitelist is empty, which means... opposite to what you might have thought: everyone is allowed to subscribe.
+*By default whitelist is empty*, which means... opposite to what you might have thought: *everyone is allowed to subscribe*.
 
 Efunguz is mutable. You can
 
@@ -238,10 +244,17 @@ Efunguz is mutable. You can
 * add and delete *ehyphae* (see below) via `add_ehypha()` and `del_ehypha()`:
 
 ```python
+that_publickey = "WR)%3-d9dw)%3VQ@O37dVe<09FuNzI{vh}Vfi+]0"
 that_onion = "abcde23456abcde23456abcde23456abcde23456abcde23456abcdef"
 that_port = 12345
-that_publickey = "WR)%3-d9dw)%3VQ@O37dVe<09FuNzI{vh}Vfi+]0"
 ehypha, _ = efunguz.add_ehypha(that_publickey, that_onion, that_port)
+```
+
+* obtain ehypha by its publickey via `get_ehypha()`:
+
+```python
+that_publickey = "iGxlt)JYh!P9xPCY%BlY4Y]c^<=W)k^$T7GirF[R"
+ehypha, _ = efunguz.get_ehypha(that_publickey)
 ```
 
 * publish/emit etales via `emit_etale()`:
@@ -274,7 +287,7 @@ while not quit: # main program loop
         if (len(that_etale.parts) == 2) and (len(that_etale.parts[1]) == 4): # sanity checks
             kappa_level = int.from_bytes(that_etale.parts[1], byteorder="little")
             # do something with kappa level
-    t_last_etale = that_etale.t_in
+        t_last_etale = that_etale.t_in
 ```
 
 See also `Realm_CA.run()` in `demo.py`.
@@ -295,6 +308,13 @@ that_etale, _ = ehypha.add_etale("status3")
 
 At first, etale is empty (no parts). If efunguz with public key `WR)%3-d9dw)%3VQ@O37dVe<09FuNzI{vh}Vfi+]0` is available at onion `abcde23456abcde23456abcde23456abcde23456abcde23456abcdef`, port `12345`, allows subscriptions from your efunguz, and publishes etale under the title `status3`, then, after a while, this etale will be received by you after `efunguz.update()` call, and will be updated as long as these conditions hold. Its fields are described below in *Etale* paragraph.
 
+* obtain etale by its title via `get_etale()`:
+
+```python
+title = "status7"
+that_etale, _ = ehypha.get_etale(title)
+```
+
 * pause and resume update of either single etale, or all etales, via `pause_etale[s]()` and `resume_etale[s]()`
 
 *Internally, Ehypha owns SUB socket for etales. The context is the one of Efunguz.*
@@ -304,7 +324,7 @@ At first, etale is empty (no parts). If efunguz with public key `WR)%3-d9dw)%3VQ
 **Etale**, a.k.a. partitioned data chunk with metadata, is the main data unit that efungi exchange.
 It has the following fields:
 
-* `parts` (`[bytes]`) contains the data
+* `parts` (`[bytes]`) contains the latest obtained data
 
 * `t_out` (`int`) is the time in microseconds since Unix epoch, measured at sender, when the etale was published
 
