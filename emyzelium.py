@@ -31,7 +31,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 """
-Source
+Library
 """
 
 try:
@@ -52,8 +52,8 @@ if (sys.version_info[0] < 3) or ((sys.version_info[0] == 3) and (sys.version_inf
 	exit(1)
 
 
-VERSION = "0.9.2"
-DATE = "2023.10.11"
+LIB_VERSION = "0.9.4"
+LIB_DATE = "2023.10.31"
 
 EW_OK = 0
 EW_ALREADY_PRESENT = 1
@@ -70,7 +70,6 @@ ZAP_DOMAIN_ID = b"emyz"
 ZAP_SESSION_ID_LEN = 32
 
 DEF_IPV6_STATUS = 1
-DEF_LINGER = 0
 
 DEF_PUBSUB_PORT = 0xEDAF # 60847
 
@@ -101,15 +100,15 @@ class Etale:
 class Ehypha:
 
 	def __init__(self, context, secretkey, publickey, serverkey, onion, pubsub_port, torproxy_port, torproxy_host):
+		self.endpoint = f"tcp://{onion}.onion:{pubsub_port}"
 		self.subsock = context.socket(zmq.SUB)
-		self.subsock.set(zmq.LINGER, DEF_LINGER)
 		self.subsock.curve_secretkey = secretkey.encode("ascii")
 		self.subsock.curve_publickey = publickey.encode("ascii")
 		self.subsock.curve_serverkey = serverkey.encode("ascii")
 
 		self.subsock.set(zmq.SOCKS_PROXY, (f"{torproxy_host}:{torproxy_port}").encode("ascii"))
 		
-		self.subsock.connect(f"tcp://{onion}.onion:{pubsub_port}")
+		self.subsock.connect(self.endpoint)
 
 		self.etales = dict()
 
@@ -205,6 +204,7 @@ class Efunguz:
 	def __init__(self, secretkey, whitelist_publickeys=set(), pubsub_port=DEF_PUBSUB_PORT, torproxy_port=DEF_TOR_PROXY_PORT, torproxy_host=DEF_TOR_PROXY_HOST):
 		self.context = zmq.Context()
 		self.context.set(zmq.IPV6, DEF_IPV6_STATUS)
+		self.context.set(zmq.BLOCKY, 0)
 
 		self.secretkey = cut_pad_key_str(secretkey)
 		self.publickey = zmq.curve_public(self.secretkey.encode("ascii")).decode("ascii")
@@ -223,14 +223,12 @@ class Efunguz:
 
 		# At first, REP socket for ZAP auth...
 		self.zapsock = self.context.socket(zmq.REP)
-		self.zapsock.set(zmq.LINGER, DEF_LINGER)
 		self.zapsock.bind("inproc://zeromq.zap.01")
 
 		self.zap_session_id = secrets.token_bytes(ZAP_SESSION_ID_LEN) # must be cryptographically random... is it?
 
 		# ..and only then, PUB socket
 		self.pubsock = self.context.socket(zmq.PUB)
-		self.pubsock.set(zmq.LINGER, DEF_LINGER)
 		self.pubsock.curve_server = True
 		self.pubsock.curve_secretkey = self.secretkey.encode("ascii")
 		self.pubsock.set(zmq.ZAP_DOMAIN, ZAP_DOMAIN_ID) # to enable auth, must be non-empty due to ZMQ RFC 27

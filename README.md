@@ -8,6 +8,8 @@ Versions in other languages:
 
 * [C++](https://github.com/emyzelium/emyzelium-cpp)
 
+* [Go](https://github.com/emyzelium/emyzelium-go)
+
 * [Rust](https://github.com/emyzelium/emyzelium-rs)
 
 ## Warning
@@ -51,7 +53,7 @@ then check if there are any problems:
 $ systemctl status tor@default
 ```
 
-should show `... active(running) ...`
+should show `... active(running) ...` and `... Bootstrapped 100% (done): Done ...`
 
 Wait a little for 3 specified dirs to appear, and, in each of them, the file `hostname`.
 
@@ -215,7 +217,7 @@ So, *Efunguz*, *Ehypha*, and *Etale* are just fancy names of well known concepts
 
 ---
 
-**Efunguz**, a.k.a. peer, is the mediator between some "realm", represented by your program, and Tor network, represented by ZeroMQ on top of Tor SOCKS proxy, to which it talks. To the former, it simplifies security, (re)connection, and data flow tasks.
+**Efunguz**, a.k.a. peer, is the mediator between some "realm", represented by your Python program, and Tor network, represented by ZeroMQ on top of Tor SOCKS proxy, to which it talks. To the former, it simplifies security, (re)connection, and data flow tasks.
 
 The simplest way to construct efunguz is
 
@@ -250,7 +252,7 @@ that_port = 12345
 ehypha, _ = efunguz.add_ehypha(that_publickey, that_onion, that_port)
 ```
 
-* obtain ehypha by its publickey via `get_ehypha()`:
+* obtain ehypha by its public key via `get_ehypha()`:
 
 ```python
 that_publickey = "iGxlt)JYh!P9xPCY%BlY4Y]c^<=W)k^$T7GirF[R"
@@ -354,11 +356,11 @@ Here it is bidirectional, but may be unidirectional as well. For this to work, e
 
 **Q.** How reliable Emyzelium is? How secure? Are there backdoors?
 
-**A.** No "audit" has been performed, so... read the source through carefully, it is small enough — Python version is twice smaller than this README. The buck then goes to underlying layers — ZeroMQ, Curve, Tor, TCP/IP etc. Sorry, there is no other way if you trust only yourself of today.
+**A.** No "audit" has been performed, so... read the source through carefully, it is small enough — Python version is twice smaller than this README. The buck then goes to underlying layers — ZeroMQ, Curve, Tor, TCP/IP, BIOS/EFI, hardware etc. Sorry, there is no other way if you trust only yourself of current Planck time unit.
 
 Yes, there are backdoors. No, there are no backdoors.
 
-Do not omit sanity checks of received etales and during their deserialization.
+Do not omit sanity checks of received etales and during their deserialisation.
 
 Do not use keys from demo, generate your own unique pairs.
 
