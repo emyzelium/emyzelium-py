@@ -52,8 +52,8 @@ if (sys.version_info[0] < 3) or ((sys.version_info[0] == 3) and (sys.version_inf
 	exit(1)
 
 
-LIB_VERSION = "0.9.4"
-LIB_DATE = "2023.10.31"
+LIB_VERSION = "0.9.6"
+LIB_DATE = "2023.11.30"
 
 EW_OK = 0
 EW_ALREADY_PRESENT = 1
@@ -182,7 +182,7 @@ class Ehypha:
 	def update(self):
 		t = time_musec()
 
-		while self.subsock.poll(0) > 0:
+		while self.subsock.get(zmq.EVENTS) & zmq.POLLIN != 0:
 			message_parts = self.subsock.recv_multipart()
 			# 0th is topic, 1st is remote time, rest (optional) is data
 			if len(message_parts) >= 2:
@@ -294,7 +294,7 @@ class Efunguz:
 
 
 	def update(self):
-		while self.zapsock.poll(0) > 0:
+		while self.zapsock.get(zmq.EVENTS) & zmq.POLLIN != 0:
 			msg_parts = self.zapsock.recv_multipart()
 			version, sequence, domain, address, identity, mechanism, key = msg_parts[:7]
 			key_b = z85.encode(key)
