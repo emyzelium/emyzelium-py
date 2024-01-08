@@ -9,12 +9,12 @@ each peer, identified by its public key, onion address, and port,
 publishes and updates vectors of vectors of bytes of data
 under unique topics that other peers subscribe to
 and receive the respective data.
- 
+
 https://github.com/emyzelium/emyzelium-py
 
 emyzelium@protonmail.com
  
-Copyright (c) 2022-2023 Emyzelium caretakers
+Copyright (c) 2022-2024 Emyzelium caretakers
  
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -52,8 +52,8 @@ if (sys.version_info[0] < 3) or ((sys.version_info[0] == 3) and (sys.version_inf
 	exit(1)
 
 
-LIB_VERSION = "0.9.6"
-LIB_DATE = "2023.11.30"
+LIB_VERSION = "0.9.8"
+LIB_DATE = "2024.01.08"
 
 EW_OK = 0
 EW_ALREADY_PRESENT = 1
@@ -233,7 +233,15 @@ class Efunguz:
 		self.pubsock.curve_secretkey = self.secretkey.encode("ascii")
 		self.pubsock.set(zmq.ZAP_DOMAIN, ZAP_DOMAIN_ID) # to enable auth, must be non-empty due to ZMQ RFC 27
 		self.pubsock.set(zmq.ROUTING_ID, self.zap_session_id) # to make sure only this pubsock can pass auth through zapsock; see update()
+		
+		# Before binding, attach monitor
+		self.pubsock.monitor("inproc://monitor-pub", zmq.EVENT_ALL)
+		self.monsock = self.context.socket(zmq.PAIR)
+		self.monsock.connect("inproc://monitor-pub")
+
 		self.pubsock.bind(f"tcp://*:{self.pubsub_port}")
+
+		self.in_conn_num = 0
 
 
 	def add_whitelist_publickeys(self, publickeys):
@@ -308,3 +316,17 @@ class Efunguz:
 
 		for eh in self.ehyphae.values():
 			eh.update()
+
+		while self.monsock.get(zmq.EVENTS) & zmq.POLLIN != 0:
+			event_msg = self.monsock.recv_multipart()
+			if len(event_msg) > 0:
+				if len(event_msg[0]) >= 2:
+					event_num = int.from_bytes(event_msg[0][:2], byteorder="little")
+					if event_num & zmq.EVENT_ACCEPTED != 0:
+						self.in_conn_num += 1
+					if (event_num & zmq.EVENT_DISCONNECTED != 0) and (self.in_conn_num > 0):
+						self.in_conn_num -= 1
+
+
+	def in_connections_num(self):
+		return self.in_conn_num

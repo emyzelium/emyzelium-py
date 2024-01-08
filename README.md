@@ -292,9 +292,11 @@ while not quit: # main program loop
         t_last_etale = that_etale.t_in
 ```
 
+* get the count of current accepted incoming connections from other efungi via `in_connections_num()`
+
 See also `Realm_CA.run()` in `demo.py`.
 
-*Internally, Efunguz owns ZeroMQ context, PUB socket for etales, and REP socket for ZAP authentication.*
+*Internally, Efunguz owns ZeroMQ context, PUB socket for etales, REP socket for ZAP authentication, and PAIR socket monitoring PUB.*
 
 ---
 

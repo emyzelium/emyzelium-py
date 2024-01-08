@@ -16,7 +16,7 @@ https://github.com/emyzelium/emyzelium-py
 
 emyzelium@protonmail.com
  
-Copyright (c) 2022-2023 Emyzelium caretakers
+Copyright (c) 2022-2024 Emyzelium caretakers
  
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -275,7 +275,7 @@ class Realm_CA:
 					self.render(scr, paused)
 				else:
 					scr.addstr(0, 0, "Render OFF")
-				scr.addstr((h >> 1) + 2, 0, f"This realm: \"{self.name}'s\" (birth {self.birth}, survival {self.survival}), SLE {t - t_last_emit:.1f}, autoemit ({self.autoemit_interval:.1f}) "+ ("ON" if autoemit else "OFF"))
+				scr.addstr((h >> 1) + 2, 0, f"This realm: \"{self.name}'s\" (birth {self.birth}, survival {self.survival}), SLE {t - t_last_emit:.1f}, autoemit ({self.autoemit_interval:.1f}) " + ("ON" if autoemit else "OFF") + f", InConnsN {self.efunguz.in_connections_num()}")
 				scr.addstr((h >> 1) + 3, 0, f"Other realms: ")
 				for i_other in range(len(self.others)):
 					that = self.others[i_other]
