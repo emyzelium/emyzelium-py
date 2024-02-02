@@ -52,8 +52,8 @@ if (sys.version_info[0] < 3) or ((sys.version_info[0] == 3) and (sys.version_inf
 	exit(1)
 
 
-LIB_VERSION = "0.9.8"
-LIB_DATE = "2024.01.08"
+LIB_VERSION = "0.9.10"
+LIB_DATE = "2024.02.02"
 
 EW_OK = 0
 EW_ALREADY_PRESENT = 1
@@ -241,7 +241,9 @@ class Efunguz:
 
 		self.pubsock.bind(f"tcp://*:{self.pubsub_port}")
 
-		self.in_conn_num = 0
+		self.in_accepted_num = 0
+		self.in_handshake_succeeded_num = 0
+		self.in_disconnected_num = 0
 
 
 	def add_whitelist_publickeys(self, publickeys):
@@ -323,10 +325,20 @@ class Efunguz:
 				if len(event_msg[0]) >= 2:
 					event_num = int.from_bytes(event_msg[0][:2], byteorder="little")
 					if event_num & zmq.EVENT_ACCEPTED != 0:
-						self.in_conn_num += 1
-					if (event_num & zmq.EVENT_DISCONNECTED != 0) and (self.in_conn_num > 0):
-						self.in_conn_num -= 1
+						self.in_accepted_num += 1
+					if event_num & zmq.EVENT_HANDSHAKE_SUCCEEDED != 0:
+						self.in_handshake_succeeded_num += 1
+					if event_num & zmq.EVENT_DISCONNECTED != 0:
+						self.in_disconnected_num += 1
 
 
-	def in_connections_num(self):
-		return self.in_conn_num
+	def in_attempted_num(self):
+		return self.in_accepted_num
+
+
+	def in_permitted_num(self):
+		return self.in_handshake_succeeded_num
+
+
+	def in_absorbing_num(self):
+		return max(self.in_accepted_num - self.in_disconnected_num, 0) # may temporarily exceed number of actually subscribed peers, until disconnection due to failed auth
